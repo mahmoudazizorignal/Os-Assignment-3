@@ -506,3 +506,110 @@ public class SRTFScheduling {
 
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+import java.util.*;
+
+public class PriorityScheduling {
+    private ArrayList<Process>processes;
+     ArrayList<String>ganttChartProcesses;
+     ArrayList<Integer>ganttChartTime;
+     Map<String, Integer>waitingTime, turnaroundTime;
+
+    PriorityScheduling(ArrayList<Process>processes) {
+        this.processes = processes;
+        ganttChartTime = new ArrayList<>();
+        ganttChartProcesses = new ArrayList<>();
+        waitingTime = new HashMap<>();
+        turnaroundTime = new HashMap<>();
+    }
+    ////////////////////////////////////////////////////////////////////
+     void scheduler() {
+        Collections.sort(processes, Comparator.comparingInt(Process::getAT));
+        ganttChartTime.add(processes.get(0).getAT());
+        int currentTime = processes.get(0).getAT();
+        while (processes.size() > 0) {
+            ArrayList<Process>readyQueue = new ArrayList<>();
+            int i;
+            for (i = 0; i < processes.size() && processes.get(i).getAT() <= currentTime; ++i) {
+                    readyQueue.add(processes.get(i));
+            }
+            Collections.sort(readyQueue, Comparator.comparingInt(Process::getPN));
+            if (i < processes.size()) {
+                int nextArrivalTime = processes.get(i).getAT();
+                for (Process p : readyQueue) {
+                    ganttChartProcesses.add(p.getName());
+                    ganttChartTime.add(p.getBT() + ganttChartTime.get(ganttChartTime.size() - 1));
+
+                    waitingTime.put(p.getName(), currentTime - p.getAT());
+                    turnaroundTime.put(p.getName(), currentTime - p.getAT() + p.getBT());
+
+                    currentTime += p.getBT();
+                    processes.remove(p);
+                    if (currentTime >= nextArrivalTime) break;
+                }
+                if (currentTime < nextArrivalTime) {
+                    ganttChartProcesses.add(" ");
+                    ganttChartTime.add(nextArrivalTime - currentTime);
+                    currentTime = nextArrivalTime;
+                }
+            }
+            else {
+                for (Process p : readyQueue) {
+                    ganttChartProcesses.add(p.getName());
+                    ganttChartTime.add(p.getBT() + ganttChartTime.get(ganttChartTime.size() - 1));
+                    waitingTime.put(p.getName(), currentTime - p.getAT());
+                    turnaroundTime.put(p.getName(), currentTime - p.getAT() + p.getBT());
+                    currentTime += p.getBT();
+                    processes.remove(p);
+                }
+            }
+        }
+    }
+    //////////////////////////////////////////////////////////////////////////
+    double avgWaitingTime() {
+        double avg = 0;
+        for (Map.Entry<String, Integer>entry : waitingTime.entrySet()) {
+            avg += entry.getValue();
+        }
+        avg /= waitingTime.size();
+        return avg;
+    }
+    /////////////////////////////////////////////////////////////////////////
+    double avgTurnaroundTime() {
+        double avg = 0;
+        for (Map.Entry<String, Integer>entry : turnaroundTime.entrySet()) {
+            avg += entry.getValue();
+        }
+        avg /= turnaroundTime.size();
+        return avg;
+    }
+    ////////////////////////////////////////////////////////////////////////////
+    public void main() {
+        scheduler();
+        System.out.println("-------------------------- Gantt Chart --------------------------");
+        System.out.print("Process\t\t");
+        for (int i = 0; i < ganttChartProcesses.size(); ++i) {
+            System.out.print(ganttChartProcesses.get(i) + "\t\t");
+        }
+        System.out.println();
+        System.out.print("Time\t\t");
+        for (int i = 0; i < ganttChartTime.size(); ++i) {
+            System.out.print(ganttChartTime.get(i) + "\t\t");
+        }
+        System.out.print("\n\n");
+        System.out.println("--------------------- Waiting time for each process -------------------");
+        System.out.println("Process\t\twaiting time");
+        for (Map.Entry<String, Integer> entry : waitingTime.entrySet()) {
+            System.out.println(entry.getKey() + "\t\t\t" + entry.getValue());
+        }
+        System.out.print("\n");
+        System.out.println("--------------------- Turnaround time for each process -------------------");
+        System.out.println("Process\t\tturnaround time");
+        for (Map.Entry<String, Integer> entry : turnaroundTime.entrySet()) {
+            System.out.println(entry.getKey() + "\t\t\t" + entry.getValue());
+        }
+        System.out.println("\nAverage Waiting Time = " + avgWaitingTime());
+        System.out.println("Average Turnaround Time = " + avgTurnaroundTime());
+    }
+}
+
