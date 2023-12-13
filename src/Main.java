@@ -47,6 +47,10 @@ class Process {
         this.BT = BT;
     }
 }
+
+
+//////////////////////////////////////////////////////////////////////////////////////
+
 class AGProcess extends Process {
     private int AGF, QT;
     AGProcess(String name, int AT, int BT, int PN, int AGF, int QT) {
@@ -254,3 +258,5 @@ class AGScheduler {
         System.out.println();
     }
 }
+
+//////////////////////////////////////////////////////////////////////////////////////
