@@ -9,8 +9,10 @@ public class Main {
 //        int quantumT = Integer.parseInt(scanner.nextLine());
 //        System.out.print("Enter context switching time: ");
 //        int switchT = Integer.parseInt(scanner.nextLine());
-        AGScheduler agScheduler = new AGScheduler(4, 4);
-        agScheduler.run();
+//        AGScheduler agScheduler = new AGScheduler(4, 4);
+//        agScheduler.run();
+        SJFScheduler sjfScheduler = new SJFScheduler(4, 0);
+        sjfScheduler.run();
 //        agScheduler.printExecutionHistory();
 //        agScheduler.printWaitingTime();
 //        agScheduler.printTurnAroundTime();
@@ -260,3 +262,92 @@ class AGScheduler {
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
+class SJFScheduler {
+
+    private List<Process> processes;
+    private List<Process> executedProcesses;
+    private int contextTime;
+    private Map<String, Integer> waiting_time, turn_around_time;
+    SJFScheduler(int processNum, int contextTime) {
+        processes = new ArrayList<>();
+        executedProcesses = new ArrayList<>();
+        waiting_time = new HashMap<>();
+        turn_around_time = new HashMap<>();
+        this.contextTime = contextTime;
+
+        System.out.println("Enter each processes' info (Name ArrivalTime BurstTime):");
+
+        Scanner scanner = new Scanner(System.in);
+        for (int i = 1; i <= processNum; i++) {
+            String input;
+            input = scanner.nextLine();
+            String[] arrayList = input.split(" ");
+
+            String curName = arrayList[0];
+            int AT = Integer.parseInt(arrayList[1]);
+            int BT = Integer.parseInt(arrayList[2]);
+            int PN = 0;
+            processes.add(new Process(curName, AT, BT, PN));
+        }
+        Collections.sort(processes, Comparator.comparingInt(p -> p.getAT()));
+    }
+    public void run() {
+        System.out.println("\nGantt Chart:");
+        System.out.print("0");
+
+        int t = 0;
+        while (!processes.isEmpty()) {
+            Process shortestJob = null;
+            int shortestBurst = Integer.MAX_VALUE;
+
+            for (Process p : processes) {
+                if (p.getAT() <= t && p.getBT() < shortestBurst) {
+                    shortestJob = p;
+                    shortestBurst = p.getBT();
+                }
+            }
+
+            if (shortestJob == null) {
+                t = processes.get(0).getAT();
+                System.out.print(" Idle (" + t + ")");
+            } else {
+                processes.remove(shortestJob);
+                waiting_time.put(shortestJob.getName(), t - shortestJob.getAT());
+                turn_around_time.put(
+                        shortestJob.getName(),
+                        waiting_time.get(shortestJob.getName()) + shortestJob.getBT()
+                );
+                t += shortestJob.getBT();
+
+                executedProcesses.add(shortestJob);
+
+                System.out.print(" -> " + shortestJob.getName() + " (" + t + ")");
+                t += contextTime;
+            }
+        }
+        System.out.println("\n*********************************************");
+        printWaitingTime();
+        System.out.println("*********************************************");
+        printTurnAroundTime();
+        System.out.println("*********************************************");
+    }
+    public void printWaitingTime() {
+        double avg = 0;
+        for ( Map.Entry<String, Integer> entry : waiting_time.entrySet() ) {
+            System.out.println(entry.getKey() + " waiting time : " + entry.getValue());
+            avg += entry.getValue();
+        }
+        avg /= waiting_time.size();
+        System.out.println("Average waiting time: " + avg);
+    }
+    public void printTurnAroundTime() {
+        double avg = 0;
+        for ( Map.Entry<String, Integer> entry : turn_around_time.entrySet() ) {
+            System.out.println(entry.getKey() + " turnaround time : " + entry.getValue());
+            avg += entry.getValue();
+        }
+        avg /= turn_around_time.size();
+        System.out.println("Average turnaround time: " + avg);
+    }
+
+}
