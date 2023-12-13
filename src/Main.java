@@ -11,7 +11,7 @@ public class Main {
 //        int switchT = Integer.parseInt(scanner.nextLine());
         AGScheduler agScheduler = new AGScheduler(4, 4);
         agScheduler.run();
-        agScheduler.printExecutionHistory();
+//        agScheduler.printExecutionHistory();
 //        agScheduler.printWaitingTime();
 //        agScheduler.printTurnAroundTime();
 //        agScheduler.printQuantumHistory();
@@ -64,15 +64,12 @@ class AGProcess extends Process {
         this.QT = QT;
     }
 }
-
-
 class AGProcessComparator implements Comparator<AGProcess> {
     @Override
     public int compare(AGProcess p1, AGProcess p2) {
         return Integer.compare(p1.getAGF(), p2.getAGF());
     }
 }
-
 class HistoryItem {
     String name;
     int t1, t2;
@@ -87,16 +84,13 @@ class HistoryItem {
     }
 }
 
-
 class AGScheduler {
     private Set<AGProcess> min_agfactor;
     private Deque<AGProcess> ready_queue;
     private Queue<AGProcess> all_processes;
     private ArrayList<AGProcess> die_list;
     private ArrayList<HistoryItem> executionHistory;
-    private Map<String, Integer> waiting_time, turn_around_time;
-    private ArrayList<ArrayList<Integer>> quantumHistory;
-    private int QT;
+    private Map<String, Integer> waiting_time, turn_around_time, curQuantum;
     private void checkProcessAtT(int t) {
         while ( !all_processes.isEmpty() && t == all_processes.peek().getAT() ) {
             AGProcess top_element = all_processes.poll();
@@ -113,99 +107,122 @@ class AGScheduler {
         executionHistory = new ArrayList<>();
         waiting_time = new HashMap<>();
         turn_around_time = new HashMap<>();
-        quantumHistory = new ArrayList<>();
-        QT = quantumT;
+        curQuantum = new HashMap<>();
 
-//        System.out.println("Enter each process's info (Name ArrivalTime BurstTime PriorityNumber):");
-//        Scanner scanner = new Scanner(System.in);
-//
+        System.out.println("Enter each process's info (Name ArrivalTime BurstTime PriorityNumber):");
+        Scanner scanner = new Scanner(System.in);
+
         ArrayList<AGProcess> AGList = new ArrayList<>();
-//        for ( int i = 0; i < processNum; ++i ) {
-//            String input;
-//            input = scanner.nextLine();
-//            String[] arrayList = input.split(" ");
-//
-//            String curName = arrayList[0];
-//            int AT = Integer.parseInt(arrayList[1]);
-//            int BT = Integer.parseInt(arrayList[2]);
-//            int PN = Integer.parseInt(arrayList[3]);
-//            int AG = -1;
-//
-//            Random random = new Random();
-//            int randomNumber = random.nextInt(21);
-//            if ( randomNumber < 10 )
-//                AG = randomNumber + AT + BT;
-//            else if ( randomNumber > 10 )
-//                AG = 10 + AT + BT;
-//            else
-//                AG = PN + AT + BT;
-//
-//            AGList.add(new AGProcess(curName, AT, BT, PN, AG, quantumT));
-//        }
-        AGList.add(new AGProcess("P1", 0, 17, 4, 20, 4));
-        AGList.add(new AGProcess("P2", 3, 6, 9, 17, 4));
-        AGList.add(new AGProcess("P3", 4, 10, 2, 16, 4));
-        AGList.add(new AGProcess("P4", 29, 4, 8, 43, 4));
+        for ( int i = 0; i < processNum; ++i ) {
+            String input;
+            input = scanner.nextLine();
+            String[] arrayList = input.split(" ");
+
+            String curName = arrayList[0];
+            int AT = Integer.parseInt(arrayList[1]);
+            int BT = Integer.parseInt(arrayList[2]);
+            int PN = Integer.parseInt(arrayList[3]);
+            int AG = -1;
+
+            Random random = new Random();
+            int randomNumber = random.nextInt(21);
+            if ( randomNumber < 10 )
+                AG = randomNumber + AT + BT;
+            else if ( randomNumber > 10 )
+                AG = 10 + AT + BT;
+            else
+                AG = PN + AT + BT;
+
+            AGList.add(new AGProcess(curName, AT, BT, PN, AG, quantumT));
+        }
+//        AGList.add(new AGProcess("P1", 0, 17, 4, 20, 4));
+//        AGList.add(new AGProcess("P2", 3, 6, 9, 17, 4));
+//        AGList.add(new AGProcess("P3", 4, 10, 2, 16, 4));
+//        AGList.add(new AGProcess("P4", 29, 4, 8, 43, 4));
         Collections.sort(AGList, Comparator.comparingInt(AGProcess::getAT));
         for ( int i = 0; i < processNum; ++i ) {
             all_processes.add(AGList.get(i));
+            curQuantum.put(AGList.get(i).getName(), quantumT);
         }
     }
     public void run() {
-        int smQ = QT * all_processes.size(), t = 0, completed_processes = 0;
+
+        int smQ = all_processes.peek().getQT() * all_processes.size(), t = 0, completed_processes = 0;
         int all_processes_count = all_processes.size();
+        printQuantumHistory();
+
         while ( completed_processes < all_processes_count ) {
+
+
             int t1 = t;
             checkProcessAtT(t);
 
             AGProcess top_element = ready_queue.removeFirst(); min_agfactor.remove(top_element);
             String name = top_element.getName();
-            if ( !waiting_time.containsKey(name) )
-                waiting_time.put(name, t - top_element.getAT());
-            turn_around_time.put(name, 0);
+            int AT = top_element.getAT();
+            int QT = top_element.getQT();
+            int BT = top_element.getBT();
+            int AGF = top_element.getAGF();
 
-            int runTime = Math.min((top_element.getQT() + 1) / 2, top_element.getBT());
+            if ( !waiting_time.containsKey(name) )
+                waiting_time.put(name, t - AT);
+
+            int runTime = Math.min((QT + 1) / 2, BT);
             for ( int i = 0; i < runTime; ++i ) {
                 checkProcessAtT(++t);
-                turn_around_time.put(name, turn_around_time.get(name) + 1);
             }
-            int curQT = top_element.getQT() - runTime;
-            top_element.setBT(top_element.getBT() - runTime);
+            QT = QT - runTime;
+            BT -= runTime;
 
-            while ( curQT!=0 && top_element.getBT()!=0 &&
-                    ( min_agfactor.isEmpty() || top_element.getAGF() <= min_agfactor.iterator().next().getAGF() ) ) {
+            while ( QT != 0 && BT != 0 &&
+                    ( min_agfactor.isEmpty() || AGF <= min_agfactor.iterator().next().getAGF() ) ) {
+                --QT; --BT;
                 checkProcessAtT(++t);
-                turn_around_time.put(name, turn_around_time.get(name) + 1);
-                --curQT;
-                top_element.setBT(top_element.getBT() - 1);
             }
 
-            if ( top_element.getBT() == 0 ) {
-                smQ -= top_element.getQT();
-                top_element.setQT(0);
+            if ( BT == 0 ) {
+                smQ -= top_element.getQT(); QT = 0;
+                top_element.setQT(QT); top_element.setBT(BT);
+                curQuantum.put(name, QT);
                 die_list.add(top_element);
                 completed_processes++;
+                turn_around_time.put(
+                        name,
+                        t - AT
+                );
             }
             else {
-                if ( curQT != 0 ) {
-                    top_element.setQT(top_element.getQT() + curQT);
-                    smQ += curQT;
-                    turn_around_time.put(top_element.getName(),
-                        turn_around_time.get(top_element.getName()) + waiting_time.get(top_element.getName()));
+                if ( QT != 0 ) {
+                    smQ += QT;
+                    QT += top_element.getQT();
+                    top_element.setQT(QT);
+                    top_element.setBT(BT);
+                    curQuantum.put(name, QT);
                     ready_queue.remove(min_agfactor.iterator().next());
                     ready_queue.addFirst(min_agfactor.iterator().next());
                 }
                 else {
                     int val = (int) ( Math.ceil(0.1 * smQ / all_processes_count) );
-                    top_element.setQT(top_element.getQT() + val);
-                    smQ += val;
+                    QT = top_element.getQT() + val;   smQ += val;
+                    top_element.setQT(QT);
+                    top_element.setBT(BT);
+                    curQuantum.put(name, QT);
                 }
                 ready_queue.addLast(top_element);
                 min_agfactor.add(top_element);
             }
             int t2 = t;
             executionHistory.add(new HistoryItem(name, t1, t2));
+
+            printQuantumHistory();
         }
+        System.out.println("*******************************");
+        printExecutionHistory();
+        System.out.println("*******************************");
+        printWaitingTime();
+        System.out.println("*******************************");
+        printTurnAroundTime();
+        System.out.println("*******************************");
     }
     public void printExecutionHistory() {
         for ( int i = 0; i < executionHistory.size(); ++i )
@@ -230,11 +247,10 @@ class AGScheduler {
         System.out.println("Average turnaround time: " + avg);
     }
     public void printQuantumHistory() {
-        System.out.println("Quantum History:");
-        for ( int i = 0; i < quantumHistory.size(); ++i ) {
-            for ( int j = 0; j < quantumHistory.get(i).size(); ++i )
-                System.out.print(quantumHistory.get(i).get(j) + " ");
-            System.out.println();
+        System.out.print("Quantum History: ");
+        for ( Map.Entry<String, Integer> entry : curQuantum.entrySet() ) {
+            System.out.print(entry.getKey() + ": " + entry.getValue() + "  ");
         }
+        System.out.println();
     }
 }
