@@ -388,7 +388,7 @@ class SJFScheduler {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class SRTFScheduling {
-    private int currentTime, completedProcesses;
+    
     private ArrayList<Process> processes;
     private ArrayList<String> ganttChartProcesses;
     private ArrayList<Integer> ganttChartTime;
@@ -396,7 +396,6 @@ class SRTFScheduling {
 
     SRTFScheduling(ArrayList<Process>processes) {
         this.processes = processes;
-        currentTime = completedProcesses = 0;
         ganttChartProcesses = new ArrayList<>();
         ganttChartTime = new ArrayList<>();
         waitingTime = new HashMap<>();
@@ -408,7 +407,8 @@ class SRTFScheduling {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////
     private void scheduler() {
         Collections.sort(processes, Comparator.comparingInt(Process::getAT));
-        currentTime = processes.get(0).getAT();
+        int currentTime = processes.get(0).getAT();
+        int completedProcesses = 0;
         while (completedProcesses < processes.size()) {
             ArrayList<Process> readyQueue = new ArrayList<>();
             int i;
