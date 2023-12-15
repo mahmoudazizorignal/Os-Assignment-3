@@ -415,18 +415,21 @@ class SRTFScheduling {
             for (i = 0; i < processes.size() && processes.get(i).getAT() <= currentTime; i++) {
                 if (processes.get(i).getBT() > 0)  readyQueue.add(processes.get(i));
             }
+            if (readyQueue.isEmpty()) {
+                ganttChartProcesses.add(" ");
+                ganttChartTime.add(processes.get(i).getAT() - currentTime);
+                currentTime = processes.get(i).getAT();
+                continue;
+            }
             Collections.sort(readyQueue, Comparator.comparingInt(Process::getBT));
             Process executingProcess = readyQueue.get(0);
             if (i < processes.size()) {
                 int nextArrivalTime = processes.get(i).getAT();
                 ganttChartProcesses.add(executingProcess.getName());
                 ganttChartTime.add(Math.min(nextArrivalTime - currentTime, executingProcess.getBT()));
-                if (nextArrivalTime - currentTime > executingProcess.getBT()) {
-                    ganttChartProcesses.add(" ");
-                    ganttChartTime.add(nextArrivalTime - currentTime - executingProcess.getBT());
-                }
-                executingProcess.setBT(executingProcess.getBT() - (Math.min(nextArrivalTime - currentTime, executingProcess.getBT())));
-                currentTime = nextArrivalTime;
+                int t = currentTime;
+                currentTime += Math.min(nextArrivalTime - currentTime, executingProcess.getBT());
+                executingProcess.setBT(executingProcess.getBT() - (Math.min(nextArrivalTime - t, executingProcess.getBT())));
                 if (executingProcess.getBT() == 0) completedProcesses++;
             }
             else {
