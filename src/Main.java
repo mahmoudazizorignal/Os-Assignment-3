@@ -3,16 +3,61 @@ import java.util.*;
 public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-//        System.out.print("Enter # of processes: ");
-//        int processNum = Integer.parseInt(scanner.nextLine());
-//        System.out.print("Enter round robin time quantum: ");
-//        int quantumT = Integer.parseInt(scanner.nextLine());
-//        System.out.print("Enter context switching time: ");
-//        int switchT = Integer.parseInt(scanner.nextLine());
+        System.out.print("Enter # of processes: ");
+        int processNum = Integer.parseInt(scanner.nextLine());
+        System.out.print("Enter round robin time quantum: ");
+        int quantumT = Integer.parseInt(scanner.nextLine());
+        System.out.print("Enter context switching time: ");
+        int switchT = Integer.parseInt(scanner.nextLine());
+
+        System.out.println("Enter each process's info (Name ArrivalTime BurstTime PriorityNumber):");
+        ArrayList<Process> processes = new ArrayList<>();
+        for ( int i = 0; i < processNum; ++i ) {
+            String input;
+            input = scanner.nextLine();
+            String[] arrayList = input.split(" ");
+
+            String curName = arrayList[0];
+            int AT = Integer.parseInt(arrayList[1]);
+            int BT = Integer.parseInt(arrayList[2]);
+            int PN = Integer.parseInt(arrayList[3]);
+
+            processes.add(new Process(curName, AT, BT, PN));
+        }
+        while ( true ) {
+            System.out.println("Choose Your Scheduler:");
+            System.out.println("[1] Shortest- Job First (SJF)");
+            System.out.println("[2] Shortest- Remaining Time First (SRTF)");
+            System.out.println("[3] Priority Scheduling");
+            System.out.println("[4] AG Scheduling");
+            System.out.println("[5] Exit");
+            System.out.print("=> ");
+            int k = Integer.parseInt(scanner.nextLine());
+            switch(k) {
+                case 1:
+                    SJFScheduler sjfScheduler = new SJFScheduler(processes, switchT);
+                    sjfScheduler.run();
+                    break;
+                case 2:
+                    SRTFScheduling srtfScheduling = new SRTFScheduling(processes);
+                    srtfScheduling.run();
+                    break;
+                case 3:
+                    PriorityScheduling priorityScheduling = new PriorityScheduling(processes);
+                    priorityScheduling.run();
+                    break;
+                case 4:
+                    AGScheduler agScheduler = new AGScheduler(processes, quantumT);
+                    agScheduler.run();
+                    break;
+                case 5:
+                    System.exit(0);
+            }
+        }
 //        AGScheduler agScheduler = new AGScheduler(4, 4);
 //        agScheduler.run();
-        SJFScheduler sjfScheduler = new SJFScheduler(4, 0);
-        sjfScheduler.run();
+//        SJFScheduler sjfScheduler = new SJFScheduler(4, 0);
+//        sjfScheduler.run();
 //        agScheduler.printExecutionHistory();
 //        agScheduler.printWaitingTime();
 //        agScheduler.printTurnAroundTime();
@@ -103,7 +148,7 @@ class AGScheduler {
         }
     }
 
-    AGScheduler(int processNum, int quantumT) {
+    AGScheduler(ArrayList<Process> processes, int quantumT) {
         min_agfactor = new TreeSet<>(new AGProcessComparator());
         ready_queue = new LinkedList<>();
         all_processes = new LinkedList<>();
@@ -114,18 +159,13 @@ class AGScheduler {
         curQuantum = new HashMap<>();
 
         System.out.println("Enter each process's info (Name ArrivalTime BurstTime PriorityNumber):");
-        Scanner scanner = new Scanner(System.in);
 
         ArrayList<AGProcess> AGList = new ArrayList<>();
-        for ( int i = 0; i < processNum; ++i ) {
-            String input;
-            input = scanner.nextLine();
-            String[] arrayList = input.split(" ");
-
-            String curName = arrayList[0];
-            int AT = Integer.parseInt(arrayList[1]);
-            int BT = Integer.parseInt(arrayList[2]);
-            int PN = Integer.parseInt(arrayList[3]);
+        for ( int i = 0; i < processes.size(); ++i ) {
+            String curName = processes.get(i).getName();
+            int AT = processes.get(i).getAT();
+            int BT = processes.get(i).getBT();
+            int PN = processes.get(i).getPN();
             int AG = -1;
 
             Random random = new Random();
@@ -144,7 +184,7 @@ class AGScheduler {
 //        AGList.add(new AGProcess("P3", 4, 10, 2, 16, 4));
 //        AGList.add(new AGProcess("P4", 29, 4, 8, 43, 4));
         Collections.sort(AGList, Comparator.comparingInt(AGProcess::getAT));
-        for ( int i = 0; i < processNum; ++i ) {
+        for ( int i = 0; i < processes.size(); ++i ) {
             all_processes.add(AGList.get(i));
             curQuantum.put(AGList.get(i).getName(), quantumT);
         }
@@ -266,7 +306,7 @@ class SJFScheduler {
     private List<Process> executedProcesses;
     private int contextTime;
     private Map<String, Integer> waiting_time, turn_around_time;
-    SJFScheduler(int processNum, int contextTime) {
+    SJFScheduler(ArrayList<Process> all_processes, int contextTime) {
         processes = new ArrayList<>();
         executedProcesses = new ArrayList<>();
         waiting_time = new HashMap<>();
@@ -276,14 +316,10 @@ class SJFScheduler {
         System.out.println("Enter each processes' info (Name ArrivalTime BurstTime):");
 
         Scanner scanner = new Scanner(System.in);
-        for (int i = 1; i <= processNum; i++) {
-            String input;
-            input = scanner.nextLine();
-            String[] arrayList = input.split(" ");
-
-            String curName = arrayList[0];
-            int AT = Integer.parseInt(arrayList[1]);
-            int BT = Integer.parseInt(arrayList[2]);
+        for (int i = 0; i < all_processes.size(); i++) {
+            String curName = all_processes.get(i).getName();
+            int AT = all_processes.get(i).getAT();
+            int BT = all_processes.get(i).getBT();
             int PN = 0;
             processes.add(new Process(curName, AT, BT, PN));
         }
@@ -350,14 +386,13 @@ class SJFScheduler {
 
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-import java.util.*;
 
-public class SRTFScheduling {
+class SRTFScheduling {
     private int currentTime, completedProcesses;
-    private ArrayList<Process>processes;
-    private ArrayList<String>ganttChartProcesses;
-    private ArrayList<Integer>ganttChartTime;
-    private Map<String, Integer>waitingTime, turnaroundTime;
+    private ArrayList<Process> processes;
+    private ArrayList<String> ganttChartProcesses;
+    private ArrayList<Integer> ganttChartTime;
+    private Map<String, Integer> waitingTime, turnaroundTime;
 
     SRTFScheduling(ArrayList<Process>processes) {
         this.processes = processes;
@@ -470,7 +505,7 @@ public class SRTFScheduling {
         return avg;
     }
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    public void main() {
+    void run() {
         scheduler();
         calculateWaitingTime();
         calculateTurnaroundTime();
@@ -503,11 +538,8 @@ public class SRTFScheduling {
 
 
 }
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-import java.util.*;
-
-public class PriorityScheduling {
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class PriorityScheduling {
     private ArrayList<Process>processes;
      ArrayList<String>ganttChartProcesses;
      ArrayList<Integer>ganttChartTime;
@@ -521,7 +553,7 @@ public class PriorityScheduling {
         turnaroundTime = new HashMap<>();
     }
     ////////////////////////////////////////////////////////////////////
-     void scheduler() {
+    void scheduler() {
         Collections.sort(processes, Comparator.comparingInt(Process::getAT));
         ganttChartTime.add(processes.get(0).getAT());
         int currentTime = processes.get(0).getAT();
@@ -582,7 +614,7 @@ public class PriorityScheduling {
         return avg;
     }
     ////////////////////////////////////////////////////////////////////////////
-    public void main() {
+    void run() {
         scheduler();
         System.out.println("-------------------------- Gantt Chart --------------------------");
         System.out.print("Process\t\t");
