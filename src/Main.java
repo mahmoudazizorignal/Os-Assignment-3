@@ -59,9 +59,10 @@ public class Main {
 
 class Process {
     private String name;
-    private int AT, BT, PN;
+    private int AT, BT, PN, wait;
 
     Process(String name, int AT, int BT, int PN) {
+        wait = 0;
         this.name = name;
         this.AT = AT;
         this.BT = BT;
@@ -83,6 +84,18 @@ class Process {
 
     public void setBT(int BT) {
         this.BT = BT;
+    }
+
+    public int getWait() {
+        return wait;
+    }
+
+    public void setWait(int wait) {
+        this.wait += wait;
+    }
+
+    public void incrementPN() {
+        this.PN--;
     }
 }
 //////////////////////////////////////////////////////////////////////////////////////
