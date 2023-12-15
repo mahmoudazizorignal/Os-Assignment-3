@@ -158,31 +158,31 @@ class AGScheduler {
         turn_around_time = new HashMap<>();
         curQuantum = new HashMap<>();
 
-        System.out.println("Enter each process's info (Name ArrivalTime BurstTime PriorityNumber):");
+//        System.out.println("Enter each process's info (Name ArrivalTime BurstTime PriorityNumber):");
 
         ArrayList<AGProcess> AGList = new ArrayList<>();
-        for ( int i = 0; i < processes.size(); ++i ) {
-            String curName = processes.get(i).getName();
-            int AT = processes.get(i).getAT();
-            int BT = processes.get(i).getBT();
-            int PN = processes.get(i).getPN();
-            int AG = -1;
-
-            Random random = new Random();
-            int randomNumber = random.nextInt(21);
-            if ( randomNumber < 10 )
-                AG = randomNumber + AT + BT;
-            else if ( randomNumber > 10 )
-                AG = 10 + AT + BT;
-            else
-                AG = PN + AT + BT;
-
-            AGList.add(new AGProcess(curName, AT, BT, PN, AG, quantumT));
-        }
-//        AGList.add(new AGProcess("P1", 0, 17, 4, 20, 4));
-//        AGList.add(new AGProcess("P2", 3, 6, 9, 17, 4));
-//        AGList.add(new AGProcess("P3", 4, 10, 2, 16, 4));
-//        AGList.add(new AGProcess("P4", 29, 4, 8, 43, 4));
+//        for ( int i = 0; i < processes.size(); ++i ) {
+//            String curName = processes.get(i).getName();
+//            int AT = processes.get(i).getAT();
+//            int BT = processes.get(i).getBT();
+//            int PN = processes.get(i).getPN();
+//            int AG = -1;
+//
+//            Random random = new Random();
+//            int randomNumber = random.nextInt(21);
+//            if ( randomNumber < 10 )
+//                AG = randomNumber + AT + BT;
+//            else if ( randomNumber > 10 )
+//                AG = 10 + AT + BT;
+//            else
+//                AG = PN + AT + BT;
+//
+//            AGList.add(new AGProcess(curName, AT, BT, PN, AG, quantumT));
+//        }
+        AGList.add(new AGProcess("P1", 0, 17, 4, 20, 4));
+        AGList.add(new AGProcess("P2", 3, 6, 9, 17, 4));
+        AGList.add(new AGProcess("P3", 4, 10, 2, 16, 4));
+        AGList.add(new AGProcess("P4", 29, 4, 8, 43, 4));
         Collections.sort(AGList, Comparator.comparingInt(AGProcess::getAT));
         for ( int i = 0; i < processes.size(); ++i ) {
             all_processes.add(AGList.get(i));
@@ -215,7 +215,7 @@ class AGScheduler {
             for ( int i = 0; i < runTime; ++i ) {
                 checkProcessAtT(++t);
             }
-            QT = QT - runTime;
+            QT -= runTime;
             BT -= runTime;
 
             while ( QT != 0 && BT != 0 &&
@@ -430,7 +430,8 @@ class SRTFScheduling {
                 int t = currentTime;
                 currentTime += Math.min(nextArrivalTime - currentTime, executingProcess.getBT());
                 executingProcess.setBT(executingProcess.getBT() - (Math.min(nextArrivalTime - t, executingProcess.getBT())));
-                if (executingProcess.getBT() == 0) completedProcesses++;
+                if (executingProcess.getBT() == 0)
+                    completedProcesses++;
             }
             else {
                 for (Process p : readyQueue) {
@@ -460,7 +461,7 @@ class SRTFScheduling {
         }
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////
-    private void calculateWaitingTime() {
+    private void calculateWaitingTurnaroundTime() {
         for (Process p : processes) {
             boolean first = true;
             int endTime = 0;
@@ -468,25 +469,21 @@ class SRTFScheduling {
                 if (Objects.equals(ganttChartProcesses.get(i), p.getName())) {
                     if (first) {
                         waitingTime.put(ganttChartProcesses.get(i), ganttChartTime.get(i) - p.getAT());
+                        turnaroundTime.put(
+                                ganttChartProcesses.get(i),
+                                ganttChartTime.get(i) - p.getAT() + turnaroundTime.get(ganttChartProcesses.get(i))
+                        );
                         first = false;
                     }
                     else {
-                        int x = waitingTime.get(ganttChartProcesses.get(i));
-                        waitingTime.put(ganttChartProcesses.get(i), ganttChartTime.get(i) - endTime + x);
+                        int x = turnaroundTime.get(ganttChartProcesses.get(i));
+                        turnaroundTime.put(ganttChartProcesses.get(i), ganttChartTime.get(i) - endTime + x);
                     }
                     if (i != ganttChartProcesses.size() - 1) {
                         endTime = ganttChartTime.get(i + 1);
                     }
                 }
             }
-        }
-    }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    private void calculateTurnaroundTime() {
-        for (int i = 0; i < processes.size(); ++i) {
-            int waiting = waitingTime.get(processes.get(i).getName());
-            int burst = turnaroundTime.get(processes.get(i).getName());
-            turnaroundTime.put(processes.get(i).getName(), waiting + burst);
         }
     }
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -510,8 +507,7 @@ class SRTFScheduling {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////
     void run() {
         scheduler();
-        calculateWaitingTime();
-        calculateTurnaroundTime();
+        calculateWaitingTurnaroundTime();
         System.out.println("-------------------------- Gantt Chart --------------------------");
         System.out.print("Process\t\t");
         for (int i = 0; i < ganttChartProcesses.size(); ++i) {
@@ -536,6 +532,7 @@ class SRTFScheduling {
         }
         System.out.println("\nAverage Waiting Time = " + avgWaitingTime());
         System.out.println("Average Turnaround Time = " + avgTurnaroundTime());
+        System.out.println("---------------------------------------------------------------------------");
     }
 
 
@@ -643,6 +640,7 @@ class PriorityScheduling {
         }
         System.out.println("\nAverage Waiting Time = " + avgWaitingTime());
         System.out.println("Average Turnaround Time = " + avgTurnaroundTime());
+        System.out.println("--------------------------------------------------------------------------");
     }
 }
 
