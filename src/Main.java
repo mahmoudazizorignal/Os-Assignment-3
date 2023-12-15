@@ -24,35 +24,30 @@ public class Main {
 
             processes.add(new Process(curName, AT, BT, PN));
         }
-        while ( true ) {
-            System.out.println("Choose Your Scheduler:");
-            System.out.println("[1] Shortest- Job First (SJF)");
-            System.out.println("[2] Shortest- Remaining Time First (SRTF)");
-            System.out.println("[3] Priority Scheduling");
-            System.out.println("[4] AG Scheduling");
-            System.out.println("[5] Exit");
-            System.out.print("=> ");
-            int k = Integer.parseInt(scanner.nextLine());
-            switch(k) {
-                case 1:
-                    SJFScheduler sjfScheduler = new SJFScheduler(processes, switchT);
-                    sjfScheduler.run();
-                    break;
-                case 2:
-                    SRTFScheduling srtfScheduling = new SRTFScheduling(processes);
-                    srtfScheduling.run();
-                    break;
-                case 3:
-                    PriorityScheduling priorityScheduling = new PriorityScheduling(processes);
-                    priorityScheduling.run();
-                    break;
-                case 4:
-                    AGScheduler agScheduler = new AGScheduler(processes, quantumT);
-                    agScheduler.run();
-                    break;
-                case 5:
-                    System.exit(0);
-            }
+        System.out.println("Choose Your Scheduler:");
+        System.out.println("[1] Shortest- Job First (SJF)");
+        System.out.println("[2] Shortest- Remaining Time First (SRTF)");
+        System.out.println("[3] Priority Scheduling");
+        System.out.println("[4] AG Scheduling");
+        System.out.print("=> ");
+        int k = Integer.parseInt(scanner.nextLine());
+        switch(k) {
+            case 1:
+                SJFScheduler sjfScheduler = new SJFScheduler(processes, switchT);
+                sjfScheduler.run();
+                break;
+            case 2:
+                SRTFScheduling srtfScheduling = new SRTFScheduling(processes);
+                srtfScheduling.run();
+                break;
+            case 3:
+                PriorityScheduling priorityScheduling = new PriorityScheduling(processes);
+                priorityScheduling.run();
+                break;
+            case 4:
+                AGScheduler agScheduler = new AGScheduler(processes, quantumT);
+                agScheduler.run();
+                break;
         }
     }
 }
@@ -161,8 +156,6 @@ class AGScheduler {
         waiting_time = new HashMap<>();
         turn_around_time = new HashMap<>();
         curQuantum = new HashMap<>();
-
-        System.out.println("Enter each process's info (Name ArrivalTime BurstTime PriorityNumber):");
 
         ArrayList<AGProcess> AGList = new ArrayList<>();
         for ( int i = 0; i < processes.size(); ++i ) {
@@ -317,9 +310,6 @@ class SJFScheduler {
         turn_around_time = new HashMap<>();
         this.contextTime = contextTime;
 
-        System.out.println("Enter each processes' info (Name ArrivalTime BurstTime):");
-
-        Scanner scanner = new Scanner(System.in);
         for (int i = 0; i < all_processes.size(); i++) {
             String curName = all_processes.get(i).getName();
             int AT = all_processes.get(i).getAT();
@@ -538,9 +528,6 @@ class SRTFScheduling {
         System.out.println("Average Turnaround Time = " + avgTurnaroundTime());
         System.out.println("---------------------------------------------------------------------------");
     }
-
-
-
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class PriorityScheduling {
