@@ -54,9 +54,10 @@ public class Main {
 
 class Process {
     private String name;
-    private int AT, BT, PN, wait;
+    private int AT, BT, PN, wait, aging;
 
     Process(String name, int AT, int BT, int PN) {
+        aging = 0;
         wait = 0;
         this.name = name;
         this.AT = AT;
@@ -91,6 +92,18 @@ class Process {
 
     public void incrementPN(int n) {
         this.PN -= n;
+    }
+
+    public int getAging() {
+        return aging;
+    }
+
+    public void setAging(int n) {
+        aging += n;
+    }
+
+    public void setPN(int p) {
+        this.PN = p;
     }
 }
 //////////////////////////////////////////////////////////////////////////////////////
@@ -383,10 +396,10 @@ class SJFScheduler {
 
 class SRTFScheduling {
     
-    private ArrayList<Process> processes;
-    private ArrayList<String> ganttChartProcesses;
-    private ArrayList<Integer> ganttChartTime;
-    private Map<String, Integer> waitingTime, turnaroundTime;
+    private ArrayList<Process>processes;
+    private ArrayList<String>ganttChartProcesses;
+    private ArrayList<Integer>ganttChartTime;
+    private Map<String, Integer>waitingTime, turnaroundTime, burstTime;
 
     SRTFScheduling(ArrayList<Process>processes) {
         this.processes = processes;
@@ -394,15 +407,17 @@ class SRTFScheduling {
         ganttChartTime = new ArrayList<>();
         waitingTime = new HashMap<>();
         turnaroundTime = new HashMap<>();
+        burstTime = new HashMap<>();
         for (int i = 0; i < processes.size(); ++i) {
             turnaroundTime.put(processes.get(i).getName(), processes.get(i).getBT());
+            burstTime.put(processes.get(i).getName(), processes.get(i).getBT());
         }
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////
-    private void scheduler() {
+     private void scheduler() {
         Collections.sort(processes, Comparator.comparingInt(Process::getAT));
         int currentTime = processes.get(0).getAT();
-        int completedProcesses = 0;
+        int completedProcesses = 0, aging = 20;
         while (completedProcesses < processes.size()) {
             ArrayList<Process> readyQueue = new ArrayList<>();
             int i;
@@ -416,21 +431,22 @@ class SRTFScheduling {
                 continue;
             }
             Collections.sort(readyQueue, Comparator.comparingInt(Process::getBT));
-            Process executingProcess = readyQueue.get(0);
             if (i < processes.size()) {
+                Process executingProcess = selectProcess(readyQueue, aging);
                 int nextArrivalTime = processes.get(i).getAT();
                 ganttChartProcesses.add(executingProcess.getName());
                 ganttChartTime.add(Math.min(nextArrivalTime - currentTime, executingProcess.getBT()));
                 int t = currentTime;
                 currentTime += Math.min(nextArrivalTime - currentTime, executingProcess.getBT());
                 executingProcess.setBT(executingProcess.getBT() - (Math.min(nextArrivalTime - t, executingProcess.getBT())));
-                if (executingProcess.getBT() == 0)
-                    completedProcesses++;
+                if (executingProcess.getBT() == 0) completedProcesses++;
             }
             else {
-                for (Process p : readyQueue) {
-                    ganttChartProcesses.add(p.getName());
-                    ganttChartTime.add(p.getBT());
+                while (readyQueue.size() > 0) {
+                    Process executingProcess = selectProcess(readyQueue, aging);
+                    ganttChartProcesses.add(executingProcess.getName());
+                    ganttChartTime.add(executingProcess.getBT());
+                    readyQueue.remove(executingProcess);
                     completedProcesses++;
                 }
                 ArrayList<Integer>temp = new ArrayList<>();
@@ -453,6 +469,31 @@ class SRTFScheduling {
                 }
             }
         }
+
+        for (int i = 0; i < processes.size(); ++i) {
+            String name = processes.get(i).getName();
+            processes.get(i).setBT(burstTime.get(name));
+        }
+
+    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////
+    private Process selectProcess(ArrayList<Process>readyQueue, int aging) {
+        int mx = -1000, ind = 0;
+        for (int i = 0;  i < readyQueue.size(); ++i) {
+            if (readyQueue.get(i).getAging() > mx && readyQueue.get(i).getAging() > aging) {
+                mx = readyQueue.get(i).getAging();
+                ind = i;
+            }
+        }
+        for (int i = 0; i < readyQueue.size(); ++i) {
+            if (i == ind) {
+                readyQueue.get(i).setAging(-1);
+            }
+            else {
+                readyQueue.get(i).setAging(1);
+            }
+        }
+        return readyQueue.get(ind);
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////
     private void calculateWaitingTurnaroundTime() {
@@ -531,24 +572,30 @@ class SRTFScheduling {
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class PriorityScheduling {
-    private ArrayList<Process>processes;
+    private ArrayList<Process>processes, allProcesses;
      ArrayList<String>ganttChartProcesses;
      ArrayList<Integer>ganttChartTime;
-     Map<String, Integer>waitingTime, turnaroundTime;
+     Map<String, Integer>waitingTime, turnaroundTime, priority;
 
-    PriorityScheduling(ArrayList<Process>processes) {
-        this.processes = processes;
+    PriorityScheduling(ArrayList<Process>allProcesses) {
+        this.allProcesses = allProcesses;
         ganttChartTime = new ArrayList<>();
         ganttChartProcesses = new ArrayList<>();
         waitingTime = new HashMap<>();
         turnaroundTime = new HashMap<>();
+        priority = new HashMap<>();
+        processes = new ArrayList<>();
+        for (Process p : allProcesses) {
+            priority.put(p.getName(), p.getPN());
+            processes.add(p);
+        }
     }
     ////////////////////////////////////////////////////////////////////
 void scheduler() {
         Collections.sort(processes, Comparator.comparingInt(Process::getAT));
         ganttChartTime.add(processes.get(0).getAT());
         int currentTime = processes.get(0).getAT();
-        int t = 5;
+        int t = 20;
         while (processes.size() > 0) {
             ArrayList<Process>readyQueue = new ArrayList<>();
             int i;
@@ -593,6 +640,9 @@ void scheduler() {
                     processes.remove(p);
                 }
             }
+        }
+    for (int i = 0; i < allProcesses.size(); ++i) {
+            allProcesses.get(i).setPN(priority.get(allProcesses.get(i).getName()));
         }
     }
     //////////////////////////////////////////////////////////////////////////
