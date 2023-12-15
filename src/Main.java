@@ -582,7 +582,7 @@ class PriorityScheduling {
                 }
                 if (currentTime < nextArrivalTime) {
                     ganttChartProcesses.add(" ");
-                    ganttChartTime.add(nextArrivalTime - currentTime);
+                    ganttChartTime.add(ganttChartTime.get(ganttChartTime.size() - 1) + nextArrivalTime - currentTime);
                     currentTime = nextArrivalTime;
                 }
             }
