@@ -91,11 +91,11 @@ class Process {
     }
 
     public void setWait(int wait) {
-        this.wait += wait;
+        this.wait = wait;
     }
 
-    public void incrementPN() {
-        this.PN--;
+    public void incrementPN(int n) {
+        this.PN -= n;
     }
 }
 //////////////////////////////////////////////////////////////////////////////////////
@@ -557,10 +557,11 @@ class PriorityScheduling {
         turnaroundTime = new HashMap<>();
     }
     ////////////////////////////////////////////////////////////////////
-    void scheduler() {
+void scheduler() {
         Collections.sort(processes, Comparator.comparingInt(Process::getAT));
         ganttChartTime.add(processes.get(0).getAT());
         int currentTime = processes.get(0).getAT();
+        int t = 5;
         while (processes.size() > 0) {
             ArrayList<Process>readyQueue = new ArrayList<>();
             int i;
@@ -568,18 +569,26 @@ class PriorityScheduling {
                     readyQueue.add(processes.get(i));
             }
             Collections.sort(readyQueue, Comparator.comparingInt(Process::getPN));
+            int wait = 0;
             if (i < processes.size()) {
                 int nextArrivalTime = processes.get(i).getAT();
-                for (Process p : readyQueue) {
-                    ganttChartProcesses.add(p.getName());
-                    ganttChartTime.add(p.getBT() + ganttChartTime.get(ganttChartTime.size() - 1));
+                for (int j = 0; j < readyQueue.size(); ++j) {
+                    ganttChartProcesses.add(readyQueue.get(j).getName());
+                    ganttChartTime.add(readyQueue.get(j).getBT() + ganttChartTime.get(ganttChartTime.size() - 1));
 
-                    waitingTime.put(p.getName(), currentTime - p.getAT());
-                    turnaroundTime.put(p.getName(), currentTime - p.getAT() + p.getBT());
+                    waitingTime.put(readyQueue.get(j).getName(), currentTime - readyQueue.get(j).getAT());
+                    turnaroundTime.put(readyQueue.get(j).getName(), currentTime - readyQueue.get(j).getAT() + readyQueue.get(j).getBT());
 
-                    currentTime += p.getBT();
-                    processes.remove(p);
-                    if (currentTime >= nextArrivalTime) break;
+                    currentTime += readyQueue.get(j).getBT();
+                    wait += readyQueue.get(j).getBT();
+                    processes.remove(readyQueue.get(j));
+                    if (currentTime >= nextArrivalTime) {
+                        for (int k = j + 1; k < readyQueue.size(); ++k) {
+                            readyQueue.get(k).incrementPN((int)((readyQueue.get(k).getWait() + wait) / t));
+                            readyQueue.get(k).setWait(((readyQueue.get(k).getWait() + wait) % t));
+                        }
+                        break;
+                    }
                 }
                 if (currentTime < nextArrivalTime) {
                     ganttChartProcesses.add(" ");
