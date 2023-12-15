@@ -54,15 +54,6 @@ public class Main {
                     System.exit(0);
             }
         }
-//        AGScheduler agScheduler = new AGScheduler(4, 4);
-//        agScheduler.run();
-//        SJFScheduler sjfScheduler = new SJFScheduler(4, 0);
-//        sjfScheduler.run();
-//        agScheduler.printExecutionHistory();
-//        agScheduler.printWaitingTime();
-//        agScheduler.printTurnAroundTime();
-//        agScheduler.printQuantumHistory();
-//        agScheduler.run(5, 5, 5);
     }
 }
 
@@ -158,31 +149,31 @@ class AGScheduler {
         turn_around_time = new HashMap<>();
         curQuantum = new HashMap<>();
 
-//        System.out.println("Enter each process's info (Name ArrivalTime BurstTime PriorityNumber):");
+        System.out.println("Enter each process's info (Name ArrivalTime BurstTime PriorityNumber):");
 
         ArrayList<AGProcess> AGList = new ArrayList<>();
-//        for ( int i = 0; i < processes.size(); ++i ) {
-//            String curName = processes.get(i).getName();
-//            int AT = processes.get(i).getAT();
-//            int BT = processes.get(i).getBT();
-//            int PN = processes.get(i).getPN();
-//            int AG = -1;
-//
-//            Random random = new Random();
-//            int randomNumber = random.nextInt(21);
-//            if ( randomNumber < 10 )
-//                AG = randomNumber + AT + BT;
-//            else if ( randomNumber > 10 )
-//                AG = 10 + AT + BT;
-//            else
-//                AG = PN + AT + BT;
-//
-//            AGList.add(new AGProcess(curName, AT, BT, PN, AG, quantumT));
-//        }
-        AGList.add(new AGProcess("P1", 0, 17, 4, 20, 4));
-        AGList.add(new AGProcess("P2", 3, 6, 9, 17, 4));
-        AGList.add(new AGProcess("P3", 4, 10, 2, 16, 4));
-        AGList.add(new AGProcess("P4", 29, 4, 8, 43, 4));
+        for ( int i = 0; i < processes.size(); ++i ) {
+            String curName = processes.get(i).getName();
+            int AT = processes.get(i).getAT();
+            int BT = processes.get(i).getBT();
+            int PN = processes.get(i).getPN();
+            int AG = -1;
+
+            Random random = new Random();
+            int randomNumber = random.nextInt(21);
+            if ( randomNumber < 10 )
+                AG = randomNumber + AT + BT;
+            else if ( randomNumber > 10 )
+                AG = 10 + AT + BT;
+            else
+                AG = PN + AT + BT;
+
+            AGList.add(new AGProcess(curName, AT, BT, PN, AG, quantumT));
+        }
+//        AGList.add(new AGProcess("P1", 0, 17, 4, 20, 4));
+//        AGList.add(new AGProcess("P2", 3, 6, 9, 17, 4));
+//        AGList.add(new AGProcess("P3", 4, 10, 2, 16, 4));
+//        AGList.add(new AGProcess("P4", 29, 4, 8, 43, 4));
         Collections.sort(AGList, Comparator.comparingInt(AGProcess::getAT));
         for ( int i = 0; i < processes.size(); ++i ) {
             all_processes.add(AGList.get(i));
